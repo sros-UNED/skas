@@ -13,6 +13,17 @@ from os.path import splitext
 
 from setuptools import find_packages
 from setuptools import setup
+from setuptools.command.install import install
+
+
+class InstallWrapper(install):
+    def run(self):
+        self._download_spacy_es()
+        install.run(self)
+
+    def _download_spacy_es(self):
+        from spacy.cli import download
+        download('es')
 
 
 def read(*names, **kwargs):
@@ -74,4 +85,7 @@ setup(
             'skas = skas.cli:main',
         ]
     },
+    cmdclass={
+        'install': InstallWrapper
+    }
 )
