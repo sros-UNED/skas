@@ -30,8 +30,8 @@ Metrical Analysis
 """
 LIASON_FIRST_PART = set(u"aeiouáéíóúAEIOUÁÉÍÓÚy")
 LIASON_SECOND_PART = set(u"aeiouáéíóúAEIOUÁÉÍÓÚhy")
-
-STRESSED_MONOSYLLABLES = set(["yo"])
+STRESSED_UNACCENTED_MONOSYLLABLES = set(["yo", "vio", "dio", "fe", "sol", "ti", "un"])
+UNSTRESSED_UNACCENTED_MONOSYLLABLES = set(["me", "nos", "te", "os", "lo", "la", "los", "las", "le", "les", "se", "tan"])
 """
 Metrical Analysis functions
 """
@@ -70,7 +70,6 @@ def hyphenate(word):
             # Adds hyphen to syllables if regex pattern is 4, 6, or 7
             output += "-" if m.lastindex in set([4, 6, 7]) else ""
         word = word[1:]
-    print(output.split("-"))
     return output.split("-")
 
 
@@ -104,17 +103,36 @@ def is_paroxytone(syllable_list):
     return False
 
 
-def get_word_stress(word):
+def spacy_tag_to_dict(tag):
+    """
+    Creater a dict from spacy pos tags
+    :param tag: Extended spacy pos tag ("Definite=Ind|Gender=Masc|Number=Sing|PronType=Art")
+    :return: A dictionary in the form of "{'Definite': 'Ind', 'Gender': 'Masc', 'Number': 'Sing', 'PronType': 'Art'}"
+    :rtype: dict
+    """
+    if tag and '=' in tag:
+        return dict([t.split('=') for t in tag.split('|')])
+    else:
+        return {}
+
+
+def get_word_stress(word, pos, tag):
     """
     Gets a list of syllables from a word and creates a list with syllabified word and stressed syllable index
     :param word: List of str representing syllables
-    :return: List with [original syllab. word, stressed syllab. word, negative index position of stressed syllable]
-    :rtype: list
+    :param pos: PoS tag from spacy ("DET")
+    :param tag: Extended PoS tag info from spacy ("Definite=Ind|Gender=Masc|Number=Sing|PronType=Art")
+    :return: Dictionary with [original syllab. word, stressed syllab. word, negative index position of stressed syllable]
+    :rtype: dict
     """
 
     syllable_list = hyphenate(word)
     if len(syllable_list) == 1:
-        if syllable_list[0] in STRESSED_MONOSYLLABLES:
+        if ((syllable_list[0] not in UNSTRESSED_UNACCENTED_MONOSYLLABLES)
+                and ((syllable_list[0] in STRESSED_UNACCENTED_MONOSYLLABLES)
+                     or (pos not in ("DET", "PRON"))
+                     or (pos == "PRON" and tag.get("Case") == "Nom")
+                     or (pos == "DET" and tag.get("Definite") == "Ind"))):
             stressed_position = -1
         else:
             stressed_position = 0  # unstressed monosyllable
@@ -123,10 +141,10 @@ def get_word_stress(word):
         # If an orthographic accent exists, that syllable negative index is saved.
         if tilde is not None:
             stressed_position = -(len(syllable_list) - tilde)
-        # Else if the word is paroxytonic (llana) we save the penultimate syllable.
+        # Else if the word is paroxytone (llana) we save the penultimate syllable.
         elif is_paroxytone(syllable_list):
             stressed_position = -2
-        # If the word does not meet the above criteria that means that it's an oxytonic word (aguda).
+        # If the word does not meet the above criteria that means that it's an oxytone word (aguda).
         else:
             stressed_position = -1
     return {
@@ -136,17 +154,41 @@ def get_word_stress(word):
     }
 
 
-def get_syllables(line):
+def get_syllables(word_list):
     """
     Gets a list of syllables from a word and creates a list with syllabified word and stressed syllabe index
-    :param line: List of string representing a word or sentence
+    :param word_list: List of spacy objects representing a word or sentence
     :return: List with [original syllab. word, stressed syllab. word, negative index position of stressed syllable]
     :rtype: list
     """
     out = []
-    words = nlp(line)
-    for word in words:
+    for word in word_list:
         if word.is_alpha:
-            stressed_word = get_word_stress(word.text)
+            pos, tag = word.tag_.split("__")
+            tags = spacy_tag_to_dict(tag)
+            stressed_word = get_word_stress(word.text, pos, tags)
             out.append(stressed_word)
+        else:
+            out.append({"symbol": word.text})
     return out
+
+
+def get_scansion(text):
+    """
+    Generates a list of dictionaries for each line
+    :param text: Full text to be analized
+    :return: list of dictionaries per line
+    :rtype: list
+    """
+    tokens = nlp(text)
+    seen_tokens = []
+    lines = []
+    for token in tokens:
+        if token.pos_ == "SPACE" and '\n' in token.orth_ and len(seen_tokens) > 0:
+            lines.append({"tokens": get_syllables(seen_tokens)})
+            seen_tokens = []
+        else:
+            seen_tokens.append(token)
+    if len(seen_tokens) > 0:
+        lines.append({"tokens": get_syllables(seen_tokens)})
+    return lines
