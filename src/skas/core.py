@@ -1,4 +1,8 @@
 #!/usr/bin/python
+# Based on previous work done by Rafael C. Carrasco, José A. Mañas (Communications of the ACM 30(7), 1987)
+# and Javier Sober
+# https://github.com/postdataproject/skas-archived/blob/devel/skas/phonmet/syll/grapheme2syllable.py
+
 import re
 
 import spacy
