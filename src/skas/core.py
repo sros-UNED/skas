@@ -29,7 +29,7 @@ letter_clusters_re = re.compile(r"""
 Metrical Analysis
 """
 STRONG_VOWELS = set("aeoáéóÁÉÓAEO")
-WEAK_VOWELS = set("iuüíúIÍUÜÚǗ")
+WEAK_VOWELS = set("iuüíúIÍUÜÚ")
 LIAISON_FIRST_PART = set("aeiouáéíóúAEIOUÁÉÍÓÚy")
 LIAISON_SECOND_PART = set("aeiouáéíóúAEIOUÁÉÍÓÚhy")
 STRESSED_UNACCENTED_MONOSYLLABLES = set(["yo", "vio", "dio", "fe", "sol", "ti", "un"])
