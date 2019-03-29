@@ -18,18 +18,20 @@ letter_clusters_re = re.compile(r"""
     ([iuü]h[iuü])|                                            # 1: vowels
     ([aáeéíoóú]h[iuü])|                                       # 2: open vowels
     ([iuü]h[aáeéíoóú])|                                       # 3: closed vowels
-    ([a-záéíóúñ][bcdfghjklmnñpqrstvxyz][hlr][aáeéiíoóuúü])|   # 4: liquid and mute consonants
+    ([a-záéíóúñ][bcdfghjklmnñpqrstvxyz][hlr][aáeéiíoóuúü])|   # 4: liquid and mute consonants (adds hyphen)
     ([bcdfghjklmnñpqrstvxyz][hlr][aáeéiíoóuúü])|              # 5: any char followed by liquid and mute consonant
-    ([a-záéíóúñ][bcdfghjklmnñpqrstvxyz][aáeéiíoóuúü])|        # 6: non-liquid consonant
-    ([aáeéíoóú][aáeéíoóú])|                                   # 7: vowel group
+    ([a-záéíóúñ][bcdfghjklmnñpqrstvxyz][aáeéiíoóuúü])|        # 6: non-liquid consonant (adds hyphen)
+    ([aáeéíoóú][aáeéíoóú])|                                   # 7: vowel group (adds hyphen)
     ([a-záéíóúñ])                                             # 8: any char
 """, re.I | re.U | re.VERBOSE)  # re.VERBOSE is needed to be able to catch the regex group for parse()
 
 """
 Metrical Analysis
 """
-LIASON_FIRST_PART = set(u"aeiouáéíóúAEIOUÁÉÍÓÚy")
-LIASON_SECOND_PART = set(u"aeiouáéíóúAEIOUÁÉÍÓÚhy")
+STRONG_VOWELS = set("aeoáéóÁÉÓAEO")
+WEAK_VOWELS = set("iuüíúIÍUÜÚ")
+LIAISON_FIRST_PART = set("aeiouáéíóúAEIOUÁÉÍÓÚy")
+LIAISON_SECOND_PART = set("aeiouáéíóúAEIOUÁÉÍÓÚhy")
 STRESSED_UNACCENTED_MONOSYLLABLES = set(["yo", "vio", "dio", "fe", "sol", "ti", "un"])
 UNSTRESSED_UNACCENTED_MONOSYLLABLES = set(["me", "nos", "te", "os", "lo", "la", "los", "las", "le", "les", "se", "tan"])
 """
@@ -37,16 +39,16 @@ Metrical Analysis functions
 """
 
 
-def have_prosodic_liason(first_syllable, second_syllable):
+def have_prosodic_liaison(first_syllable, second_syllable):
     """
-    Checkfor prosodic liason between two syllables
+    Checkfor prosodic liaison between two syllables
     :param first_syllable: dic with key syllable (str) and is_stressed (bool) representing the first syllable
     :param second_syllable: dic with key syllable (str) and is_stressed (bool) representing the second syllable
-    :return: True if there is prosodic liason and False otherwise
+    :return: True if there is prosodic liaison and False otherwise
     :rtype: bool
     """
-    return (first_syllable['syllable'][-1] in LIASON_FIRST_PART
-            and second_syllable['syllable'][0] in LIASON_SECOND_PART)
+    return (first_syllable['syllable'][-1] in LIAISON_FIRST_PART
+            and second_syllable['syllable'][0] in LIAISON_SECOND_PART)
 
 
 """
@@ -122,10 +124,9 @@ def get_word_stress(word, pos, tag):
     :param word: List of str representing syllables
     :param pos: PoS tag from spacy ("DET")
     :param tag: Extended PoS tag info from spacy ("Definite=Ind|Gender=Masc|Number=Sing|PronType=Art")
-    :return: Dictionary with [original syllab. word, stressed syllab. word, negative index position of stressed syllable]
+    :return: Dictionary with [original syllab word, stressed syllab. word, negative index position of stressed syllable]
     :rtype: dict
     """
-
     syllable_list = hyphenate(word)
     if len(syllable_list) == 1:
         if ((syllable_list[0] not in UNSTRESSED_UNACCENTED_MONOSYLLABLES)
@@ -147,11 +148,33 @@ def get_word_stress(word, pos, tag):
         # If the word does not meet the above criteria that means that it's an oxytone word (aguda).
         else:
             stressed_position = -1
+    out_syllable_list = []
+    for index, syllable in enumerate(syllable_list):
+        out_syllable_list.append(
+            {"syllable": syllable, "is_stressed": len(syllable_list) - index == -stressed_position})
+        # Syneresis
+        first_syllable = syllable_list[index - 1]
+        second_syllable = syllable
+        if first_syllable and second_syllable and (
+                (first_syllable[-1] in STRONG_VOWELS and second_syllable[0] in STRONG_VOWELS) or (
+                first_syllable[-1] in WEAK_VOWELS and second_syllable[0] in STRONG_VOWELS) or (
+                        first_syllable[-1] in STRONG_VOWELS and second_syllable[0] in WEAK_VOWELS)):
+            out_syllable_list[0].update({'has_sinaeresis': True})
     return {
-        "syllables": [{"syllable": syllable, "is_stressed": len(syllable_list) - index == -stressed_position}
-                      for index, syllable in enumerate(syllable_list)],
-        "stress_position": stressed_position,
+        'word': out_syllable_list, "stress_position": stressed_position,
     }
+
+
+def get_last_syllable(token_list):
+    """
+    Gets last syllable from a word in a dictionary
+    :param token_list: list of dictionary tokens
+    :return: Last syllable
+    """
+    if len(token_list) > 0:
+        for token in token_list[::-1]:
+            if 'word' in token:
+                return token['word'][-1]
 
 
 def get_syllables(word_list):
@@ -161,16 +184,21 @@ def get_syllables(word_list):
     :return: List with [original syllab. word, stressed syllab. word, negative index position of stressed syllable]
     :rtype: list
     """
-    out = []
+    syllabified_words = []
     for word in word_list:
         if word.is_alpha:
             pos, tag = word.tag_.split("__")
             tags = spacy_tag_to_dict(tag)
             stressed_word = get_word_stress(word.text, pos, tags)
-            out.append(stressed_word)
+            first_syllable = get_last_syllable(syllabified_words)
+            second_syllable = stressed_word['word'][0]
+            # Synalepha
+            if first_syllable and second_syllable and have_prosodic_liaison(first_syllable, second_syllable):
+                first_syllable.update({'has_synalepha': True})
+            syllabified_words.append(stressed_word)
         else:
-            out.append({"symbol": word.text})
-    return out
+            syllabified_words.append({"symbol": word.text})
+    return syllabified_words
 
 
 def get_scansion(text):

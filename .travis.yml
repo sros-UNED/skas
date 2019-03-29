@@ -25,7 +25,7 @@ install:
   - tox --version
   - set +x
 script:
-  - tox -v
+  - travis_wait 20 tox -v
 after_failure:
   - more .tox/log/* | cat
   - more .tox/*/log/* | cat
