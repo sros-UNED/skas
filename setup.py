@@ -23,7 +23,7 @@ class InstallWrapper(install):
 
     def _download_spacy_es(self):
         from spacy.cli import download
-        download('es')
+        download('es_core_news_md')
 
 
 def read(*names, **kwargs):

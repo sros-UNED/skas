@@ -1,2 +1,2 @@
 Click>=7.0
-spacy>=2.0.18
+spacy>=2.1

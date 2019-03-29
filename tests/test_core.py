@@ -9,7 +9,7 @@ from skas.core import hyphenate
 from skas.core import is_paroxytone
 from skas.core import spacy_tag_to_dict
 
-nlp = spacy.load('es')
+nlp = spacy.load('es_core_news_md')
 
 
 def test_have_prosodic_liaison():

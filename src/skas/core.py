@@ -10,7 +10,7 @@ import spacy
 """
 Syllabification
 """
-nlp = spacy.load('es')
+nlp = spacy.load('es_core_news_md')
 accents_re = re.compile("[áéíóú]", re.I | re.U)
 paroxytone_re = re.compile("([aeiou]|n|[aeiou]s)$", re.I | re.U)  # checks if a str ends in unaccented vowel/N/S
 
