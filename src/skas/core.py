@@ -32,8 +32,8 @@ STRONG_VOWELS = set("aeoáéóÁÉÓAEO")
 WEAK_VOWELS = set("iuüíúIÍUÜÚ")
 LIAISON_FIRST_PART = set("aeiouáéíóúAEIOUÁÉÍÓÚy")
 LIAISON_SECOND_PART = set("aeiouáéíóúAEIOUÁÉÍÓÚhy")
-STRESSED_UNACCENTED_MONOSYLLABLES = set(["yo", "vio", "dio", "fe", "sol", "ti", "un"])
-UNSTRESSED_UNACCENTED_MONOSYLLABLES = set(["me", "nos", "te", "os", "lo", "la", "los", "las", "le", "les", "se", "tan"])
+STRESSED_UNACCENTED_MONOSYLLABLES = {"yo", "vio", "dio", "fe", "sol", "ti", "un"}
+UNSTRESSED_UNACCENTED_MONOSYLLABLES = {"me", "nos", "te", "os", "lo", "la", "los", "las", "le", "les", "se", "tan"}
 """
 Metrical Analysis functions
 """
