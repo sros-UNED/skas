@@ -2,33 +2,33 @@ language: python
 cache: pip
 env:
   global:
-    - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
-    - SEGFAULT_SIGNALS=all
+  - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
+  - SEGFAULT_SIGNALS=all
   matrix:
-    - TOXENV=check
-    - TOXENV=docs
+  - TOXENV=check
+  - TOXENV=docs
 matrix:
   include:
-    - python: '3.7'
-      dist: xenial
-      env:
-        - TOXENV=py37
+  - python: '3.7'
+    dist: xenial
+    env:
+    - TOXENV=py37
 before_install:
-  - python --version
-  - uname -a
-  - lsb_release -a
+- python --version
+- uname -a
+- lsb_release -a
 install:
-  - pip install tox
-  - virtualenv --version
-  - easy_install --version
-  - pip --version
-  - tox --version
-  - set +x
+- pip install tox
+- virtualenv --version
+- easy_install --version
+- pip --version
+- tox --version
+- set +x
 script:
-  - travis_wait 20 tox -v
+- travis_wait 20 tox -v
 after_failure:
-  - more .tox/log/* | cat
-  - more .tox/*/log/* | cat
+- more .tox/log/* | cat
+- more .tox/*/log/* | cat
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel
@@ -36,7 +36,7 @@ deploy:
   skip_existing: true
   user: linhd-postdata
   password:
-    secure: SoV6858OU6T1NsHmRXx13W8lACeX35OMEYPnRSLo/z2+v1NcwX5jTj6JBIv5w8Mfoyul59xWZWMXYpKNInXi9jBlhzNdcYChjvQGpglzDkJ3f3Srz63Zqh7+fdI0Gx2wtM6pExFEmF6XxOJUF88ECn1OKtSd49bkjhJAZ4zJnmeGLbwheh+ZubwqIlB6x+Pr+d09JBBLm+WXF/UcWU4659I+0a5+DLlp6MBZ2jfoK9Aif9M8Zx94HaaBUX7SoKdLiz/0ESL6l3L3MlPhoGPuBjaQ86PJqihRUPFVDlJWcMH+w4JxSKGh/pUG3qiEFPigoybiFyokmSWpKp4x/uD8og1IMi9HswNN0fosJLBhMtEJ/iUrqrvBtWI0I4gV9Anepe+XaYE7wymVAUtxy6puN3ucSwRSgPrLBEgeicSeAQH49T9jBj8i/cZ18Iwz6YZFns3OFCl05lTkjLIgga4lb/ci2C3jT6J4ZIL6OZvktpN7McGS0h64AMetI966+d1Tk4aJP1/dC/wqeWPdYB0/hSDYz/Wt9BdSqX9B/eMqmFLvv1SCdBalaoTOl3yzxXUxb6IXgg3ySQh/6vpeknlDIvy0+HtlUMqunteVshtA0biBOKqtZ1pRdNoYoO0EMZy7TMImECOzliAt485a7P5ElZ5MwNA3Q/wFpgYhGbhz6PU=
+    secure: mhvcGX4O/+gdG+BlH1VWtjIgcnSO8zX+uW3f4qw5gUi4emQAA1aHKGBYDlEmIVjV7GW9vlNZP2YwYEHtiGHVScAriQ8ivjwweGaaXfuvXxOEu8LP/4KQuli6SZvmJyFttM8SKvvLdWW122DorFtXWmAaVeyvhVj+6nW2FDU+Av/nyD/S8jNUrVyRIbt+bdfC6vOCqWSk4dIZ5H9A4UTFOKD5IgcPeM6hq7l5L4kOuqXCpZbl0y62SjpMSYPUkLrsgXeAlLF/8rArbbs29WurjmDxHjqyTT6mn0aQq24fxgg5TKR46NG58E21MEo3Pn8ABqNMk9YrOodSrTSIBh+/2XKNmXjkG85o7x3/IGc3NlTd1n8hHWkLKBLEZID//s8e43W30DJ9XNe7pHXsH2ReNcnzQCpzD+XXId35AyccJLYNUDd+4cRMPEs2OWEupVvybNRuvdsudg2/IbHspEinTfPgtNaaD5WaNnKaru3mEH/kxTJc+H/LHSw/nvQokdNFGp2B9o0S4jB8tc1AjFAfjq7rkw8X3HaZvCEZgg6VmyT4TZiZMEOBefTbKygbbKVqfciQoSsiEHdzmCn7NyIGTeb8bViUizzj9xEdxeseXwf8DiVgJ9nOr75928QygCkhuwgqavYTAX1yP8OlyGUOg/4KnbQIHxL+xVLRCcWhfcM=
   on:
     tags: true
     repo: postdataproject/skas
